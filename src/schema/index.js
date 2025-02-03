@@ -5,9 +5,16 @@ const Scholarship = require("./scholershipSchema");
 const Application = require("./Application");
 
 
-const sequelize = new Sequelize("postgres", "postgres", "New_password", {
-  host: "localhost",
+const sequelize = new Sequelize("scholarship_db", "scholarship_db", "knLDAs5Pm8OwTW7jg4wr0i2zFmteLWJA", {
+  host: "dpg-cuga60l6l47c73a0heug-a.oregon-postgres.render.com",
   dialect: "postgres",
+  ssl: true,
+  dialectOptions: {
+    ssl: {
+      rejectUnauthorized: false
+    }
+  }
+
 });
 
 const models = {
