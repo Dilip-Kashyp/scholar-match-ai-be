@@ -1,29 +1,32 @@
-const app = require("./app.js");
-require("dotenv").config();
-const db = require("./src/database/db.js");
-const { sequelize } = require("./src/schema");
+import express from 'express';
+import dotenv from 'dotenv';
+import cors from 'cors';
+import { sequelize } from './src/schema/index.js';
+import scholarshipRoutes from './src/route/scholarshipRouter.js';
+import userRoutes from './src/route/userRouter.js';
 
-const port = process.env.PORT || 5400;
+dotenv.config();
 
-const initializeApp = async () => {
-  try {
-    console.log("Checking database connection...");
-    await db.query("SELECT NOW()");
-    console.log("Database connected successfully!");
-    // createDB()
-    app.listen(port, () => {
-      console.log(`Server running on http://localhost:${port}`);
-    });
-  } catch (error) {
-    console.error("Error connecting to the database:", error.message);
-    process.exit(1);
-  }
-};
+const app = express();
 
-initializeApp();
+app.use(cors());
+app.use(express.json());
 
-function createDB() {
-  sequelize.sync({ force: true }).then(() => {
-    console.log("Database synced!");
-  });
+// Routes
+app.use('/api/v1/scholarships', scholarshipRoutes);
+app.use('/api/v1/users', userRoutes);
+
+// Database connection
+try {
+  await sequelize.authenticate();
+  console.log('Database connected successfully');
+} catch (error) {
+  console.error('Unable to connect to the database:', error);
 }
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
+
+export default app;

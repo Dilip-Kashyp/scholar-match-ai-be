@@ -1,12 +1,14 @@
 // models/index.js
-const { Sequelize } = require("sequelize");
-const User = require("./userSchema");
-const Scholarship = require("./scholershipSchema");
-const Application = require("./application");
+import { Sequelize } from "sequelize";
+import { User } from "./userSchema.js";
+import { Scholarship } from './scholershipSchema.js';
+import { Application } from "./application.js";
+import dotenv from 'dotenv';
 
+dotenv.config();
 
-const sequelize = new Sequelize("scholarship_db", "scholarship_db", "knLDAs5Pm8OwTW7jg4wr0i2zFmteLWJA", {
-  host: "dpg-cuga60l6l47c73a0heug-a.oregon-postgres.render.com",
+const sequelize = new Sequelize(process.env.DB_DATABASE, process.env.DB_USER, process.env.DB_PASSWORD, {
+  host: process.env.DB_HOST,
   dialect: "postgres",
   ssl: true,
   dialectOptions: {
@@ -14,7 +16,6 @@ const sequelize = new Sequelize("scholarship_db", "scholarship_db", "knLDAs5Pm8O
       rejectUnauthorized: false
     }
   }
-
 });
 
 const models = {
@@ -23,12 +24,10 @@ const models = {
   Application: Application(sequelize),
 };
 
-
-
 models.User.hasMany(models.Application, { foreignKey: "userId" });
 models.Application.belongsTo(models.User, { foreignKey: "userId" });
 
 models.Scholarship.hasMany(models.Application, { foreignKey: "scholarshipId" });
 models.Application.belongsTo(models.Scholarship, { foreignKey: "scholarshipId" });
 
-module.exports = { sequelize, ...models };
+export { sequelize, models };

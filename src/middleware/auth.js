@@ -1,7 +1,7 @@
-const asyncHandler = require("../utils/asyncHandler.js");
-const db = require("../database/db.js"); 
-const jwt = require("jsonwebtoken");
-const { RESPONSE_UNAUTHORIZED } = require("../constants/constants");
+import asyncHandler from "../utils/asyncHandler.js";
+import db from "../database/db.js";
+import jwt from "jsonwebtoken";
+import { RESPONSE_UNAUTHORIZED } from "../constants/constants.js";
 
 const verifyJWT = asyncHandler(async (req, res, next) => {
   try {
@@ -15,7 +15,6 @@ const verifyJWT = asyncHandler(async (req, res, next) => {
         message: RESPONSE_UNAUTHORIZED,
       });
     }
-
 
     // Verify the token
     const validateToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
@@ -32,18 +31,16 @@ const verifyJWT = asyncHandler(async (req, res, next) => {
       });
     }
 
-
     // Attach user to the request object
     req.user = result.rows[0];
 
     next();
   } catch (error) {
-    console.log("error", error)
+    console.log("error", error);
     return res.status(401).json({
       message: RESPONSE_UNAUTHORIZED,
     });
   }
 });
 
-
-module.exports = { verifyJWT };
+export default verifyJWT;

@@ -1,8 +1,8 @@
-const asyncHandler = require("../utils/asyncHandler");
-const db = require("../database/db");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const {
+import asyncHandler from "../utils/asyncHandler.js";
+import db from "../database/db.js";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import {
   RESPONSE_ERROR,
   RESPONSE_SUCCESS_REGISTER,
   RESPONSE_ERROR_REGISTER,
@@ -12,7 +12,7 @@ const {
   RESPONSE_FIELDS_REQUIRED,
   RESPONSE_USER_EXISTS,
   RESPONSE_USER_PROFILE,
-} = require("../constants/constants");
+} from "../constants/constants.js";
 
 const userRegister = asyncHandler(async (req, res) => {
   const { email, password, name } = req.body;
@@ -20,7 +20,6 @@ const userRegister = asyncHandler(async (req, res) => {
   if (!email || !password || !name) {
     return res.status(400).json({ message: RESPONSE_FIELDS_REQUIRED });
   }
-
 
   try {
     const existingUser = await db.query(
@@ -37,7 +36,6 @@ const userRegister = asyncHandler(async (req, res) => {
       "INSERT INTO users (email, password, name) VALUES ($1, $2, $3)",
       [email, hashedPassword, name]
     );
-
 
     res.status(201).json({ message: RESPONSE_SUCCESS_REGISTER });
   } catch (error) {
@@ -102,15 +100,10 @@ const userProfile = asyncHandler(async (req, res) => {
         email: user.email,
         name: user.name,
       },
-
     });
   } catch (error) {
     res.status(500).json({ message: RESPONSE_ERROR });
   }
 });
 
-module.exports = {
-  userRegister,
-  userLogin,
-  userProfile,
-};
+export { userRegister, userLogin, userProfile };

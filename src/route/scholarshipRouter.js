@@ -1,14 +1,14 @@
-const Router = require("express");
-const { verifyJWT } = require("../middleware/auth.js");
-const {
-    getAllScholarships,
-    applyScholarship,
-} = require("../controller/scholershipsController.js");
+import Router from "express";
+import {
+  getAllScholarships,
+  applyScholarship,
+} from "../controller/scholershipsController.js";
+
 const router = Router();
 
 
-router.route("/all-scholarships").get(getAllScholarships);
+router.route("/all-scholarships").post(getAllScholarships);
 router.route("/apply-scholarship").post(applyScholarship);
 
 
-module.exports = router;
+export default router;

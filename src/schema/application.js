@@ -1,43 +1,27 @@
-const { Model, DataTypes } = require("sequelize");
+import { DataTypes } from "sequelize";
 
-module.exports = (sequelize) => {
-  class Application extends Model {}
-
-  Application.init(
-    {
-      id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true,
-      },
-      userId: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: {
-          model: "users",
-          key: "id",
-        },
-      },
-      scholarshipId: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: {
-          model: "scholarships",
-          key: "id",
-        },
-      },
-      status: {
-        type: DataTypes.STRING(50),
-        defaultValue: "Pending",
-      },
+const Application = (sequelize) => {
+  const Application = sequelize.define("Application", {
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
     },
-    {
-      sequelize,
-      modelName: "Application",
-      tableName: "applications",
-      timestamps: true,
-    }
-  );
+    userId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    scholarshipId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    status: {
+      type: DataTypes.ENUM("pending", "approved", "rejected"),
+      defaultValue: "pending",
+    },
+  });
 
   return Application;
 };
+
+export { Application };
