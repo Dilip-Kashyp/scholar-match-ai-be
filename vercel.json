@@ -9,9 +9,10 @@
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "/index.js"
+      "dest": "/app.js"
     }
   ],
+
 
   "env": {
     "DB_USER": "scholarship_db",
