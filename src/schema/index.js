@@ -2,7 +2,7 @@
 const { Sequelize } = require("sequelize");
 const User = require("./userSchema");
 const Scholarship = require("./scholershipSchema");
-const Application = require("./Application");
+const Application = require("./application");
 
 
 const sequelize = new Sequelize("scholarship_db", "scholarship_db", "knLDAs5Pm8OwTW7jg4wr0i2zFmteLWJA", {
