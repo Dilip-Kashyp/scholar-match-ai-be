@@ -123,41 +123,39 @@ async function findScholarshipsByQuery(query) {
     const index = await initPinecone();
     const queryEmbedding = await embedContent(query);
     const vectorResults = await queryPinecone(index, queryEmbedding);
-
     const searchParams = await extractSearchParameters(query);
+    
     const whereClause = {
-      [Sequelize.Op.and]: [],
+      [Sequelize.Op.and]: []
     };
 
+    // Vector search results
     if (vectorResults?.length > 0) {
       whereClause[Sequelize.Op.and].push({
-        id: vectorResults.map((result) => result.id),
+        id: vectorResults.map((result) => result.id)
       });
     }
 
-    if (searchParams.location?.length > 0) {
-      whereClause[Sequelize.Op.and].push({
-        [Sequelize.Op.or]: [
-          ...searchParams.location.map(loc => ({
-            location: { [Sequelize.Op.iLike]: `%${loc}%` }
-          })),
-          { location: { [Sequelize.Op.iLike]: '%Any%' } },
-          { location: { [Sequelize.Op.iLike]: '%India%' } }
-        ]
-      });
-    }
+    // Basic field matches
+    const addILikeCondition = (field, values) => {
+      if (values?.length > 0) {
+        whereClause[Sequelize.Op.and].push({
+          [Sequelize.Op.or]: [
+            ...values.map(value => ({
+              [field]: { [Sequelize.Op.iLike]: `%${value}%` }
+            })),
+            { [field]: { [Sequelize.Op.iLike]: '%Any%' } }
+          ]
+        });
+      }
+    };
 
-    if (searchParams.category?.length > 0) {
-      whereClause[Sequelize.Op.and].push({
-        [Sequelize.Op.or]: [
-          ...searchParams.category.map(cat => ({
-            category: { [Sequelize.Op.iLike]: `%${cat}%` }
-          })),
-          { category: { [Sequelize.Op.iLike]: '%Any%' } }
-        ]
-      });
-    }
+    addILikeCondition('location', searchParams.location);
+    addILikeCondition('category', searchParams.category);
+    addILikeCondition('type', searchParams.type);
+    addILikeCondition('institution_name', searchParams.institution);
 
+    // Gender and Religious
     if (searchParams.gender?.length > 0) {
       whereClause[Sequelize.Op.and].push({
         [Sequelize.Op.or]: [
@@ -176,6 +174,39 @@ async function findScholarshipsByQuery(query) {
       });
     }
 
+    // Amount range
+    if (searchParams.amount?.min !== null || searchParams.amount?.max !== null) {
+      const amountCondition = {};
+      if (searchParams.amount.min !== null) amountCondition[Sequelize.Op.gte] = searchParams.amount.min;
+      if (searchParams.amount.max !== null) amountCondition[Sequelize.Op.lte] = searchParams.amount.max;
+      whereClause[Sequelize.Op.and].push({ amount: amountCondition });
+    }
+
+    // Income range
+    if (searchParams.income?.min !== null || searchParams.income?.max !== null) {
+      const incomeCondition = {};
+      if (searchParams.income.min !== null) incomeCondition[Sequelize.Op.gte] = searchParams.income.min;
+      if (searchParams.income.max !== null) incomeCondition[Sequelize.Op.lte] = searchParams.income.max;
+      whereClause[Sequelize.Op.and].push({ income: incomeCondition });
+    }
+
+    // Age range
+    if (searchParams.age?.min !== null) {
+      whereClause[Sequelize.Op.and].push({ min_age: { [Sequelize.Op.lte]: searchParams.age.min } });
+    }
+    if (searchParams.age?.max !== null) {
+      whereClause[Sequelize.Op.and].push({ max_age: { [Sequelize.Op.gte]: searchParams.age.max } });
+    }
+
+    // Boolean fields
+    if (searchParams.disability !== null) {
+      whereClause[Sequelize.Op.and].push({ disability: searchParams.disability });
+    }
+    if (searchParams.ex_service !== null) {
+      whereClause[Sequelize.Op.and].push({ ex_service: searchParams.ex_service });
+    }
+
+    // Keywords search across multiple fields
     if (searchParams.keywords?.length > 0) {
       whereClause[Sequelize.Op.and].push({
         [Sequelize.Op.or]: searchParams.keywords.map((keyword) => ({
@@ -183,11 +214,16 @@ async function findScholarshipsByQuery(query) {
             { name: { [Sequelize.Op.iLike]: `%${keyword}%` } },
             { description: { [Sequelize.Op.iLike]: `%${keyword}%` } },
             { type: { [Sequelize.Op.iLike]: `%${keyword}%` } },
-          ],
-        })),
+            { institution_name: { [Sequelize.Op.iLike]: `%${keyword}%` } }
+          ]
+        }))
       });
     }
 
+    // Active scholarships only
+    whereClause[Sequelize.Op.and].push({ is_active: true });
+
+    // Remove empty AND clause
     if (whereClause[Sequelize.Op.and].length === 0) {
       delete whereClause[Sequelize.Op.and];
     }
@@ -196,8 +232,9 @@ async function findScholarshipsByQuery(query) {
       where: whereClause,
       raw: true,
       limit: 100,
-      order: [["createdAt", "DESC"]],
+      order: [["createdAt", "DESC"]]
     });
+
     return scholarships;
   } catch (error) {
     console.error("Error in findScholarshipsByQuery:", error);
