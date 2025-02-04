@@ -36,37 +36,42 @@ async function generateSQLQuery(userQuery) {
 
     Rules for query generation:
     1. Always include is_active = true in WHERE clause
-    2. Use ILIKE for text pattern matching
-    3. Use proper NULL handling
-    4. Include proper date handling for deadlines
-    5. Use BETWEEN for age and amount ranges
-    6. Consider 'Any' as a valid match for gender, religious, and category
-    7. Order results by deadline ASC, amount DESC
-    8. Limit results to 100
-    9. Return ONLY the SQL query, no explanations
+    2. Use ILIKE with '%term%' pattern for flexible text matching
+    3. For each text field (name, description, type, category, etc.), check both the field directly and description
+    4. Use proper NULL handling
+    5. Include proper date handling for deadlines
+    6. Use BETWEEN for age and amount ranges
+    7. Consider 'Any' as a valid match for gender, religious, and category
+    8. For caste-based searches (SC, ST, BC, OBC, etc.), check both category and description
+    9. Order results by deadline ASC, amount DESC
+    10. Limit results to 100
+    11. Return ONLY the SQL query, no explanations
 
     Example format:
     SELECT * FROM scholarships 
     WHERE is_active = true 
-    AND (location ILIKE '%delhi%' OR location = 'Any')
+    AND (
+      category ILIKE '%BC%' 
+      OR description ILIKE '%BC%' 
+      OR category ILIKE '%backward class%' 
+      OR description ILIKE '%backward class%'
+      OR category = 'Any'
+    )
     ORDER BY deadline ASC, amount DESC 
     LIMIT 100;`;
 
     const result = await model.generateContent(prompt);
     let sqlQuery = result.response.text().trim();
-    
-    // Clean up the response
+
     sqlQuery = sqlQuery
       .replace(/```sql\s*/g, '')
       .replace(/```/g, '')
       .trim();
 
-    // Validate query has basic required elements
     if (!sqlQuery.includes('SELECT') || !sqlQuery.includes('FROM scholarships')) {
       throw new Error('Invalid SQL query generated');
     }
 
-    // Ensure is_active = true is included
     if (!sqlQuery.includes('is_active = true')) {
       sqlQuery = sqlQuery.replace(
         /WHERE/i,
@@ -77,17 +82,21 @@ async function generateSQLQuery(userQuery) {
     return sqlQuery;
   } catch (error) {
     console.error("Error generating SQL query:", error);
-    // Return a safe default query
     return `
       SELECT * FROM scholarships 
       WHERE is_active = true 
+      AND (
+        description ILIKE '%${userQuery}%'
+        OR name ILIKE '%${userQuery}%'
+        OR category ILIKE '%${userQuery}%'
+        OR category = 'Any'
+      )
       ORDER BY deadline ASC, amount DESC 
       LIMIT 100;
     `.trim();
   }
 }
 
-// Example usage:
 async function searchScholarships(userQuery) {
   try {
     const sqlQuery = await generateSQLQuery(userQuery);

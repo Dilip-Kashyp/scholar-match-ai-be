@@ -19,7 +19,7 @@ const getAllScholarships = asyncHandler(async (req, res) => {
       const results = await db.query(sqlQuery);
       scholarships = results.rows;
     } else {
-      const results = await db.query("SELECT * FROM scholarships WHERE is_active = true ORDER BY deadline ASC, amount DESC");
+      const results = await db.query("SELECT * FROM scholarships  ORDER BY deadline ASC, amount DESC");
       scholarships = results.rows;
     }
 
