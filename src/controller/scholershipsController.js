@@ -1,4 +1,3 @@
-import { runSearch } from "../ai/index.js";
 import db from "../database/db.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import {
@@ -7,28 +6,7 @@ import {
   RESPONSE_SUCCESS_APPLY_SCHOLARSHIP,
   RESPONSE_NO_SCHOLARSHIPS_FOUND,
 } from "../constants/constants.js";
-
-function formatAISearchResults(scholarships) {
-  return scholarships.map((scholarship) => ({
-    id: scholarship.id,
-    name: scholarship.name,
-    description: scholarship.description,
-    amount: scholarship.amount,
-    location: scholarship.location,
-    type: scholarship.type,
-    religious: scholarship.religious,
-    gender: scholarship.gender,
-    category: scholarship.category,
-    institution_name: scholarship.institution_name,
-    deadline: scholarship.deadline,
-    income: scholarship.income,
-    min_age: scholarship.min_age,
-    max_age: scholarship.max_age,
-    disability: scholarship.disability,
-    ex_service: scholarship.ex_service,
-    is_active: scholarship.is_active
-  }));
-}
+import { generateSQLQuery } from "../ai/genai.js";
 
 const getAllScholarships = asyncHandler(async (req, res) => {
   try {
@@ -36,10 +14,12 @@ const getAllScholarships = asyncHandler(async (req, res) => {
     let scholarships;
 
     if (searchQuery) {
-      const aiResults = await runSearch(searchQuery);
-      scholarships = formatAISearchResults(aiResults);
+      const sqlQuery = await generateSQLQuery(searchQuery);
+      console.log(sqlQuery);
+      const results = await db.query(sqlQuery);
+      scholarships = results.rows;
     } else {
-      const results = await db.query("SELECT * FROM scholarships");
+      const results = await db.query("SELECT * FROM scholarships WHERE is_active = true ORDER BY deadline ASC, amount DESC");
       scholarships = results.rows;
     }
 
