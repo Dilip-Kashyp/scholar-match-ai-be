@@ -100,7 +100,6 @@ async function generateSQLQuery(userQuery) {
 async function searchScholarships(userQuery) {
   try {
     const sqlQuery = await generateSQLQuery(userQuery);
-    console.log('Generated SQL Query:', sqlQuery);
     return sqlQuery;
   } catch (error) {
     console.error('Error in searchScholarships:', error);
