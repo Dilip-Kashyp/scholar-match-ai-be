@@ -1,5 +1,5 @@
 import { Pinecone } from "@pinecone-database/pinecone";
-
+import { VECTOR_LENFTH_ERROR } from "../constants/aiConstants.js";
 const createPineconeIndex = async (pinecone) => {
   try {
     await pinecone.createIndex({
@@ -66,10 +66,11 @@ const upsertToPinecone = async (index, vectors) => {
 
     if (invalidVectors.length > 0) {
       console.error("Invalid vectors:", invalidVectors);
-      throw new Error(`Invalid vectors found: ${invalidVectors
-        .map((v) => v.id)
-        .join(", ")}. 
-        Each vector must be an array and contain at least one non-zero value.`);
+      throw new Error(
+        `Invalid vectors found: ${invalidVectors
+          .map((v) => v.id)
+          .join(", ")}. ${VECTOR_LENFTH_ERROR}`
+      );
     }
 
     await index.upsert(vectors);
