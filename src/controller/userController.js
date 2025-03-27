@@ -12,6 +12,7 @@ import {
   RESPONSE_FIELDS_REQUIRED,
   RESPONSE_USER_EXISTS,
   RESPONSE_USER_PROFILE,
+  RESPONSE_USER_NOT_EXIST,
 } from "../constants/constants.js";
 
 const userRegister = asyncHandler(async (req, res) => {
@@ -57,7 +58,7 @@ const userLogin = asyncHandler(async (req, res) => {
     ]);
 
     if (userResult.rows.length === 0) {
-      return res.status(400).json({ message: RESPONSE_INVALID_CREDENTIALS });
+      return res.status(400).json({ message: RESPONSE_USER_NOT_EXIST });
     }
 
     const user = userResult.rows[0];

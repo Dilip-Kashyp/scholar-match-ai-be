@@ -3,6 +3,7 @@ export const RESPONSE_SUCCESS_REGISTER = "User registered successfully";
 export const RESPONSE_ERROR_REGISTER = "Error registering user";
 export const RESPONSE_ERROR_LOGIN = "Error logging in user";
 export const RESPONSE_INVALID_CREDENTIALS = "Invalid credentials";
+export const RESPONSE_USER_NOT_EXIST = "User does not exist";
 export const RESPONSE_LOGIN_SUCCESS = "Login successful";
 export const RESPONSE_FIELDS_REQUIRED = "All fields are required";
 export const RESPONSE_USER_EXISTS = "User already exists";
