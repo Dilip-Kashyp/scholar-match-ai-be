@@ -2,6 +2,7 @@ import asyncHandler from "../utils/asyncHandler.js";
 import db from "../database/db.js";
 import jwt from "jsonwebtoken";
 import { RESPONSE_UNAUTHORIZED } from "../constants/constants.js";
+import { models } from "../schema/index.js";
 
 const verifyJWT = asyncHandler(async (req, res, next) => {
   try {
@@ -19,20 +20,18 @@ const verifyJWT = asyncHandler(async (req, res, next) => {
     // Verify the token
     const validateToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
 
-    // Fetch user from PostgreSQL
-    const result = await db.query(
-      "SELECT id, email, role FROM users WHERE id = $1",
-      [validateToken.id]
-    );
+    const result = await models.User.findOne({
+      where: { id: validateToken.id },
+      attributes: ["id", "email"],
+    });
 
-    if (result.rows.length === 0) {
+    if (typeof result.dataValues === "string") {
       return res.status(401).json({
         message: RESPONSE_UNAUTHORIZED,
       });
     }
 
-    // Attach user to the request object
-    req.user = result.rows[0];
+    req.user = result.dataValues;
 
     next();
   } catch (error) {

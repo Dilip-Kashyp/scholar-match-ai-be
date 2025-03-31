@@ -31,4 +31,5 @@ export const RESPONSE_SUCCESS_APPLY_SCHOLARSHIP =
   "Scholarship applied successfully.";
 
 export const RESPONSE_NO_SCHOLARSHIPS_FOUND = "No scholarships found.";
+export const RESPONSE_NO_SCHOLARSHIPS_APPLIED = "No scholarships applied.";
 export const RESPONSE_UNAUTHORIZED = "Unauthorized";
