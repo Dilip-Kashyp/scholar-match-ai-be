@@ -32,6 +32,7 @@ const verifyJWT = asyncHandler(async (req, res, next) => {
     }
 
     req.user = result.dataValues;
+    console.log("req.user", req.user);
 
     next();
   } catch (error) {

@@ -10,6 +10,8 @@ import {
 } from "../constants/constants.js";
 import { generateSQLQuery } from "../ai/genai.js";
 import { models } from "../schema/index.js";
+import { Op } from "sequelize";
+import { ConfigureIndexRequestSpecFromJSON } from "@pinecone-database/pinecone/dist/pinecone-generated-ts-fetch/db_control/index.js";
 
 const getAllScholarships = asyncHandler(async (req, res) => {
   try {
@@ -155,9 +157,56 @@ const getAllAppliedScholarships = asyncHandler(async (req, res) => {
   }
 });
 
+const getPersonalizedScholarships = asyncHandler(async (req, res) => {
+  try {
+    const data = req.user;
+
+    const filters = await models.User.findOne({
+      where: { email: data.email },
+    });
+
+    const whereClause = {
+      is_active: true,
+    };
+
+    const filterableFields = ["location", "category", "religion", "gender"];
+
+    filterableFields.forEach((field) => {
+      const value = filters[field];
+
+      if (value && value !== "Any") {
+        whereClause[field] = {
+          [Op.iLike]: `%${value}%`,
+        };
+      }
+    });
+
+    const scholarships = await models.Scholarship.findAll({
+      where: whereClause,
+      attributes: ["id", "name", "deadline", "amount", "category"],
+    });
+
+    if (!scholarships.length) {
+      return res.status(404).json({
+        message: "No matching scholarships found.",
+        data: [],
+      });
+    }
+
+    res.status(200).json({
+      message: "Personalized scholarships retrieved successfully.",
+      data: scholarships,
+    });
+  } catch (error) {
+    console.error("Error fetching personalized scholarships:", error);
+    res.status(500).json({ message: "Internal server error." });
+  }
+});
+
 export {
   getAllScholarships,
   applyScholarship,
   overallInformation,
   getAllAppliedScholarships,
+  getPersonalizedScholarships,
 };
