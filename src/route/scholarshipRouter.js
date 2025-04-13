@@ -11,7 +11,7 @@ import verifyJWT from "../middleware/auth.js";
 const router = Router();
 
 router.route("/all-scholarships").post(getAllScholarships);
-router.route("/apply-scholarship").get(verifyJWT, applyScholarship);
+router.route("/apply-scholarship").post(verifyJWT, applyScholarship);
 router.route("/overall-status").get(verifyJWT, overallInformation);
 router
   .route("/personalized-scholarships")

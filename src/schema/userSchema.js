@@ -22,11 +22,11 @@ const User = (sequelize) => {
         type: DataTypes.STRING(255),
         allowNull: true,
       },
-      caste: {
+      category: {
         type: DataTypes.STRING(255),
         allowNull: true,
       },
-      religion: {
+      religious: {
         type: DataTypes.STRING(255),
         allowNull: true,
       },

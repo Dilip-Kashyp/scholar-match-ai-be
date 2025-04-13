@@ -10,7 +10,7 @@ import {
 } from "../constants/constants.js";
 import { generateSQLQuery } from "../ai/genai.js";
 import { models } from "../schema/index.js";
-import { Op } from "sequelize";
+import { Op, where } from "sequelize";
 import { ConfigureIndexRequestSpecFromJSON } from "@pinecone-database/pinecone/dist/pinecone-generated-ts-fetch/db_control/index.js";
 
 const getAllScholarships = asyncHandler(async (req, res) => {
@@ -55,6 +55,7 @@ const getAllScholarships = asyncHandler(async (req, res) => {
 const applyScholarship = asyncHandler(async (req, res) => {
   try {
     const { scholarship_id } = req.body;
+    console.log(scholarship_id);
     const user_id = req.user.id;
 
     if (!scholarship_id) {
@@ -165,11 +166,9 @@ const getPersonalizedScholarships = asyncHandler(async (req, res) => {
       where: { email: data.email },
     });
 
-    const whereClause = {
-      is_active: true,
-    };
+    const whereClause = {};
 
-    const filterableFields = ["location", "category", "religion", "gender"];
+    const filterableFields = ["location", "category", "religious", "gender"];
 
     filterableFields.forEach((field) => {
       const value = filters[field];
@@ -181,14 +180,21 @@ const getPersonalizedScholarships = asyncHandler(async (req, res) => {
       }
     });
 
+    if (whereClause.length === 0) {
+      return res.status(400).json({
+        message: "Complete the profile to get personalized scholarships.",
+        data: [],
+      });
+    }
+
     const scholarships = await models.Scholarship.findAll({
       where: whereClause,
       attributes: ["id", "name", "deadline", "amount", "category"],
     });
 
-    if (!scholarships.length) {
-      return res.status(404).json({
-        message: "No matching scholarships found.",
+    if (Object.keys(whereClause).length === 0) {
+      return res.status(400).json({
+        message: "Complete the profile to get personalized scholarships.",
         data: [],
       });
     }

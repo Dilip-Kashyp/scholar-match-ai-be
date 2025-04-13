@@ -42,7 +42,7 @@ models.Application.belongsTo(models.Scholarship, {
 const syncDatabase = async () => {
   try {
     // This will create tables if they don't exist or update if necessary
-    await sequelize.sync({ force: false }); // Use 'force: true' if you want to drop tables first (use with caution)
+    await sequelize.sync({ force: true }); // Use 'force: true' if you want to drop tables first (use with caution)
     console.log("Database & tables created or updated successfully!");
   } catch (error) {
     console.error("Unable to sync database:", error);

@@ -113,41 +113,66 @@ const userCreate = asyncHandler(async (req, res) => {
     const {
       name,
       email,
-      caste,
-      religion,
+      category,
+      religious,
       gender,
       age,
       location,
       academicDetails,
     } = req.body;
 
-    if (!name || !email || !caste || !age) {
-      return res.status(400).json({
-        message: "Full name, email, caste, and age are required.",
-      });
-    }
+    const [user, created] = await models.User.upsert(
+      {
+        name,
+        email,
+        category,
+        religious,
+        gender,
+        age,
+        location,
+        academicDetails,
+      },
+      { returning: true }
+    );
 
-    const newUser = await models.User.create({
-      name,
-      email,
-      caste,
-      religion,
-      gender,
-      age,
-      location,
-      academicDetails,
-    });
-
-    return res.status(201).json({
-      message: "User details saved successfully.",
-      data: newUser,
+    return res.status(created ? 201 : 200).json({
+      message: created
+        ? "User details saved successfully."
+        : "User details updated successfully.",
+      data: user,
     });
   } catch (error) {
-    console.error("Error saving user details:", error);
+    console.error("Error saving/updating user details:", error);
     return res.status(500).json({
       message: "Something went wrong. Please try again later.",
     });
   }
 });
 
-export { userRegister, userLogin, userProfile, userCreate };
+const getUserById = asyncHandler(async (req, res) => {
+  try {
+    const { id } = req.user;
+
+    const user = await models.User.findByPk(id, {
+      attributes: { exclude: ["password"] },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found.",
+      });
+    }
+
+    return res.status(200).json({
+      message: "User fetched successfully.",
+      data: user,
+    });
+  } catch (error) {
+    console.error("Error fetching user:", error);
+    return res.status(500).json({
+      message: "Something went wrong. Please try again later.",
+    });
+  }
+});
+
+export { userRegister, userLogin, userProfile, userCreate, getUserById };
