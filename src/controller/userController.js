@@ -1,5 +1,4 @@
 import asyncHandler from "../utils/asyncHandler.js";
-import db from "../database/db.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import {
@@ -13,9 +12,16 @@ import {
   RESPONSE_USER_EXISTS,
   RESPONSE_USER_PROFILE,
   RESPONSE_USER_NOT_EXIST,
+  RESPONSE_INTERNAL_SERVER_ERROR,
+  RESPONSE_USER_CREATED,
+  RESPONSE_USER_UPDATED,
+  RESPONSE_USER_FETCH_SUCCESS,
+  RESPONSE_USER_NOT_FOUND,
 } from "../constants/constants.js";
+
 import { models } from "../schema/index.js";
 
+// User Registration
 const userRegister = asyncHandler(async (req, res) => {
   const { email, password, name } = req.body;
 
@@ -24,28 +30,23 @@ const userRegister = asyncHandler(async (req, res) => {
   }
 
   try {
-    const existingUser = await db.query(
-      "SELECT * FROM users WHERE email = $1",
-      [email]
-    );
-    if (existingUser.rows.length > 0) {
+    const existingUser = await models.User.findOne({ where: { email } });
+    if (existingUser) {
       return res.status(400).json({ message: RESPONSE_USER_EXISTS });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    await db.query(
-      "INSERT INTO users (email, password, name) VALUES ($1, $2, $3)",
-      [email, hashedPassword, name]
-    );
+    await models.User.create({ email, password: hashedPassword, name });
 
     res.status(201).json({ message: RESPONSE_SUCCESS_REGISTER });
   } catch (error) {
-    console.error(error.message);
+    console.error(RESPONSE_ERROR_REGISTER, error.message);
     res.status(500).json({ message: RESPONSE_ERROR });
   }
 });
 
+// User Login
 const userLogin = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
@@ -54,15 +55,11 @@ const userLogin = asyncHandler(async (req, res) => {
   }
 
   try {
-    const userResult = await db.query("SELECT * FROM users WHERE email = $1", [
-      email,
-    ]);
+    const user = await models.User.findOne({ where: { email } });
 
-    if (userResult.rows.length === 0) {
+    if (!user) {
       return res.status(400).json({ message: RESPONSE_USER_NOT_EXIST });
     }
-
-    const user = userResult.rows[0];
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
@@ -81,9 +78,9 @@ const userLogin = asyncHandler(async (req, res) => {
       sameSite: "strict",
     });
 
-    res.json({
+    res.status(200).json({
       message: RESPONSE_LOGIN_SUCCESS,
-      token: token,
+      token,
     });
   } catch (error) {
     console.error(RESPONSE_ERROR_LOGIN, error.message);
@@ -91,11 +88,12 @@ const userLogin = asyncHandler(async (req, res) => {
   }
 });
 
+// Get User Profile
 const userProfile = asyncHandler(async (req, res) => {
   try {
     const user = req.user;
 
-    res.json({
+    res.status(200).json({
       message: RESPONSE_USER_PROFILE,
       user: {
         id: user.id,
@@ -108,6 +106,7 @@ const userProfile = asyncHandler(async (req, res) => {
   }
 });
 
+// Create or Update User Profile
 const userCreate = asyncHandler(async (req, res) => {
   try {
     const {
@@ -136,19 +135,18 @@ const userCreate = asyncHandler(async (req, res) => {
     );
 
     return res.status(created ? 201 : 200).json({
-      message: created
-        ? "User details saved successfully."
-        : "User details updated successfully.",
+      message: created ? RESPONSE_USER_CREATED : RESPONSE_USER_UPDATED,
       data: user,
     });
   } catch (error) {
     console.error("Error saving/updating user details:", error);
     return res.status(500).json({
-      message: "Something went wrong. Please try again later.",
+      message: RESPONSE_INTERNAL_SERVER_ERROR,
     });
   }
 });
 
+// Get User By ID
 const getUserById = asyncHandler(async (req, res) => {
   try {
     const { id } = req.user;
@@ -159,18 +157,18 @@ const getUserById = asyncHandler(async (req, res) => {
 
     if (!user) {
       return res.status(404).json({
-        message: "User not found.",
+        message: RESPONSE_USER_NOT_FOUND,
       });
     }
 
     return res.status(200).json({
-      message: "User fetched successfully.",
+      message: RESPONSE_USER_FETCH_SUCCESS,
       data: user,
     });
   } catch (error) {
     console.error("Error fetching user:", error);
     return res.status(500).json({
-      message: "Something went wrong. Please try again later.",
+      message: RESPONSE_INTERNAL_SERVER_ERROR,
     });
   }
 });

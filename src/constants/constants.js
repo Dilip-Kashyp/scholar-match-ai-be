@@ -33,3 +33,19 @@ export const RESPONSE_SUCCESS_APPLY_SCHOLARSHIP =
 export const RESPONSE_NO_SCHOLARSHIPS_FOUND = "No scholarships found.";
 export const RESPONSE_NO_SCHOLARSHIPS_APPLIED = "No scholarships applied.";
 export const RESPONSE_UNAUTHORIZED = "Unauthorized";
+export const RESPONSE_SCHOLARSHIP_NOT_FOUND = "Scholarship not found";
+export const RESPONSE_ALREADY_APPLIED =
+  "You have already applied for this scholarship.";
+export const RESPONSE_SUCCESS_APPLICATION_STATS =
+  "Application statistics fetched successfully.";
+export const RESPONSE_SUCCESS_RETRIEVE_APPLIED =
+  "Applied scholarships retrieved successfully.";
+export const RESPONSE_COMPLETE_PROFILE =
+  "Complete the profile to get personalized scholarships.";
+export const RESPONSE_SUCCESS_PERSONALIZED =
+  "Personalized scholarships retrieved successfully.";
+export const RESPONSE_INTERNAL_SERVER_ERROR = "Internal server error.";
+export const RESPONSE_USER_CREATED = "User details saved successfully.";
+export const RESPONSE_USER_UPDATED = "User details updated successfully.";
+export const RESPONSE_USER_FETCH_SUCCESS = "User fetched successfully.";
+export const RESPONSE_USER_NOT_FOUND = "User not found.";

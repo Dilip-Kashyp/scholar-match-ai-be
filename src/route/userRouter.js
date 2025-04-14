@@ -10,10 +10,10 @@ import {
 
 const router = Router();
 
-router.route("/profile").post(verifyJWT, userProfile);
 router.route("/register").post(userRegister);
 router.route("/login").post(userLogin);
+router.route("/create-profile").post(verifyJWT, userCreate);
 router.route("/get-user").get(verifyJWT, getUserById);
-router.route("/create-profile").post(userCreate);
+router.route("/profile").post(verifyJWT, userProfile);
 
 export default router;

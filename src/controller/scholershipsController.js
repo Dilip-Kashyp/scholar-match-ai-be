@@ -7,11 +7,19 @@ import {
   RESPONSE_NO_SCHOLARSHIPS_FOUND,
   RESPONSE_NO_SCHOLARSHIPS_APPLIED,
   RESPONSE_FIELDS_REQUIRED,
+  RESPONSE_SCHOLARSHIP_NOT_FOUND,
+  RESPONSE_ALREADY_APPLIED,
+  RESPONSE_SUCCESS_APPLICATION_STATS,
+  RESPONSE_SUCCESS_RETRIEVE_APPLIED,
+  RESPONSE_COMPLETE_PROFILE,
+  RESPONSE_SUCCESS_PERSONALIZED,
+  RESPONSE_INTERNAL_SERVER_ERROR,
 } from "../constants/constants.js";
+
 import { generateSQLQuery } from "../ai/genai.js";
 import { models } from "../schema/index.js";
-import { Op, where } from "sequelize";
-import { ConfigureIndexRequestSpecFromJSON } from "@pinecone-database/pinecone/dist/pinecone-generated-ts-fetch/db_control/index.js";
+import { Op } from "sequelize";
+
 
 const getAllScholarships = asyncHandler(async (req, res) => {
   try {
@@ -20,14 +28,15 @@ const getAllScholarships = asyncHandler(async (req, res) => {
 
     if (searchQuery) {
       const sqlQuery = await generateSQLQuery(searchQuery);
-      console.log(sqlQuery);
       const results = await db.query(sqlQuery);
       scholarships = results.rows;
     } else {
-      const results = await db.query(
-        "SELECT * FROM scholarships  ORDER BY deadline ASC, amount DESC"
-      );
-      scholarships = results.rows;
+      scholarships = await models.Scholarship.findAll({
+        order: [
+          ["deadline", "ASC"],
+          ["amount", "DESC"],
+        ],
+      });
     }
 
     if (!scholarships || scholarships.length === 0) {
@@ -52,18 +61,19 @@ const getAllScholarships = asyncHandler(async (req, res) => {
   }
 });
 
+
 const applyScholarship = asyncHandler(async (req, res) => {
   try {
     const { scholarship_id } = req.body;
-    console.log(scholarship_id);
     const user_id = req.user.id;
 
     if (!scholarship_id) {
       return res.status(400).json({ message: RESPONSE_FIELDS_REQUIRED });
     }
+
     const scholarship = await models.Scholarship.findByPk(scholarship_id);
     if (!scholarship) {
-      return res.status(404).json({ message: "Scholarship not found" });
+      return res.status(404).json({ message: RESPONSE_SCHOLARSHIP_NOT_FOUND });
     }
 
     const alreadyApplied = await models.Application.findOne({
@@ -72,7 +82,7 @@ const applyScholarship = asyncHandler(async (req, res) => {
 
     if (alreadyApplied) {
       return res.status(400).json({
-        message: "You have already applied for this scholarship.",
+        message: RESPONSE_ALREADY_APPLIED,
       });
     }
 
@@ -84,11 +94,11 @@ const applyScholarship = asyncHandler(async (req, res) => {
 
     res.status(201).json({
       data: newApplication,
-      message: "Successfully applied for the scholarship.",
+      message: RESPONSE_SUCCESS_APPLY_SCHOLARSHIP,
     });
   } catch (error) {
     console.error("Error applying for scholarship:", error);
-    res.status(500).json({ message: "Internal server error." });
+    res.status(500).json({ message: RESPONSE_INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -96,24 +106,15 @@ const overallInformation = asyncHandler(async (req, res) => {
   try {
     const userId = req.user.id;
 
-    // Count total applications
-    const totalApplications = await models.Application.count({
-      where: { userId: userId },
-    });
+    const [totalApplications, approvedApplications, pendingApplications] =
+      await Promise.all([
+        models.Application.count({ where: { userId } }),
+        models.Application.count({ where: { userId, status: "approved" } }),
+        models.Application.count({ where: { userId, status: "pending" } }),
+      ]);
 
-    // Count approved applications
-    const approvedApplications = await models.Application.count({
-      where: { userId: userId, status: "approved" },
-    });
-
-    // Count pending applications
-    const pendingApplications = await models.Application.count({
-      where: { userId: userId, status: "pending" },
-    });
-
-    // Return the response
     res.status(200).json({
-      message: "Application statistics fetched successfully.",
+      message: RESPONSE_SUCCESS_APPLICATION_STATS,
       data: {
         totalApplications,
         approvedApplications,
@@ -122,7 +123,7 @@ const overallInformation = asyncHandler(async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching application statistics:", error);
-    res.status(500).json({ message: "Internal server error." });
+    res.status(500).json({ message: RESPONSE_INTERNAL_SERVER_ERROR });
   }
 });
 
@@ -131,11 +132,11 @@ const getAllAppliedScholarships = asyncHandler(async (req, res) => {
     const userId = req.user.id;
 
     const applications = await models.Application.findAll({
-      where: { userId: userId },
+      where: { userId },
       include: [
         {
           model: models.Scholarship,
-          as: models.Scholarship,
+          as: "Scholarship",
           attributes: ["id", "name", "amount"],
         },
       ],
@@ -143,36 +144,34 @@ const getAllAppliedScholarships = asyncHandler(async (req, res) => {
 
     if (!applications.length) {
       return res.status(404).json({
-        message: "No scholarships applied yet.",
+        message: RESPONSE_NO_SCHOLARSHIPS_APPLIED,
         data: [],
       });
     }
 
     res.status(200).json({
-      message: "Applied scholarships retrieved successfully.",
+      message: RESPONSE_SUCCESS_RETRIEVE_APPLIED,
       data: applications,
     });
   } catch (error) {
     console.error("Error fetching applied scholarships:", error);
-    res.status(500).json({ message: "Internal server error." });
+    res.status(500).json({ message: RESPONSE_INTERNAL_SERVER_ERROR });
   }
 });
 
 const getPersonalizedScholarships = asyncHandler(async (req, res) => {
   try {
-    const data = req.user;
+    const { email } = req.user;
 
-    const filters = await models.User.findOne({
-      where: { email: data.email },
+    const userProfile = await models.User.findOne({
+      where: { email },
     });
 
     const whereClause = {};
-
     const filterableFields = ["location", "category", "religious", "gender"];
 
     filterableFields.forEach((field) => {
-      const value = filters[field];
-
+      const value = userProfile[field];
       if (value && value !== "Any") {
         whereClause[field] = {
           [Op.iLike]: `%${value}%`,
@@ -180,9 +179,9 @@ const getPersonalizedScholarships = asyncHandler(async (req, res) => {
       }
     });
 
-    if (whereClause.length === 0) {
+    if (Object.keys(whereClause).length === 0) {
       return res.status(400).json({
-        message: "Complete the profile to get personalized scholarships.",
+        message: RESPONSE_COMPLETE_PROFILE,
         data: [],
       });
     }
@@ -192,20 +191,13 @@ const getPersonalizedScholarships = asyncHandler(async (req, res) => {
       attributes: ["id", "name", "deadline", "amount", "category"],
     });
 
-    if (Object.keys(whereClause).length === 0) {
-      return res.status(400).json({
-        message: "Complete the profile to get personalized scholarships.",
-        data: [],
-      });
-    }
-
     res.status(200).json({
-      message: "Personalized scholarships retrieved successfully.",
+      message: RESPONSE_SUCCESS_PERSONALIZED,
       data: scholarships,
     });
   } catch (error) {
     console.error("Error fetching personalized scholarships:", error);
-    res.status(500).json({ message: "Internal server error." });
+    res.status(500).json({ message: RESPONSE_INTERNAL_SERVER_ERROR });
   }
 });
 

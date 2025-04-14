@@ -1,12 +1,11 @@
 import asyncHandler from "../utils/asyncHandler.js";
-import db from "../database/db.js";
 import jwt from "jsonwebtoken";
 import { RESPONSE_UNAUTHORIZED } from "../constants/constants.js";
 import { models } from "../schema/index.js";
 
 const verifyJWT = asyncHandler(async (req, res, next) => {
   try {
-    // Extract token from cookies or headers
+
     const token =
       req.cookies?.accessToken ||
       req.header("Authorization")?.replace("Bearer ", "");
