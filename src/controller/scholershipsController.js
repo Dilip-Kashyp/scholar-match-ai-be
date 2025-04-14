@@ -20,7 +20,6 @@ import { generateSQLQuery } from "../ai/genai.js";
 import { models } from "../schema/index.js";
 import { Op } from "sequelize";
 
-
 const getAllScholarships = asyncHandler(async (req, res) => {
   try {
     const { searchQuery } = req.body;
@@ -28,6 +27,7 @@ const getAllScholarships = asyncHandler(async (req, res) => {
 
     if (searchQuery) {
       const sqlQuery = await generateSQLQuery(searchQuery);
+      console.log("Generated SQL Query:", sqlQuery);
       const results = await db.query(sqlQuery);
       scholarships = results.rows;
     } else {
@@ -60,7 +60,6 @@ const getAllScholarships = asyncHandler(async (req, res) => {
     });
   }
 });
-
 
 const applyScholarship = asyncHandler(async (req, res) => {
   try {
