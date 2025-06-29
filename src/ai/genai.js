@@ -58,7 +58,6 @@ IMPORTANT: Return only the plain text SQL query without any code formatting mark
     const result = await model.generateContent(prompt);
     const response = result.response;
     let sqlQuery = response.text().trim();
-    t;
     sqlQuery = sqlQuery
       .replace(/```sql/g, "")
       .replace(/```/g, "")
