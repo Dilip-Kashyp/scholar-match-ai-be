@@ -32,7 +32,8 @@ export const RESPONSE_SUCCESS_APPLY_SCHOLARSHIP =
 
 export const RESPONSE_NO_SCHOLARSHIPS_FOUND = "No scholarships found.";
 export const RESPONSE_NO_SCHOLARSHIPS_APPLIED = "No scholarships applied.";
-export const RESPONSE_UNAUTHORIZED = "Unauthorized";
+export const RESPONSE_UNAUTHORIZED =
+  "Hold on! You need to be signed in to do that.";
 export const RESPONSE_SCHOLARSHIP_NOT_FOUND = "Scholarship not found";
 export const RESPONSE_ALREADY_APPLIED =
   "You have already applied for this scholarship.";

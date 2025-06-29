@@ -26,6 +26,7 @@ const getAllScholarships = asyncHandler(async (req, res) => {
     let scholarships;
 
     if (searchQuery) {
+      console.log("search", searchQuery);
       const sqlQuery = await generateSQLQuery(searchQuery);
       console.log("Generated SQL Query:", sqlQuery);
       const results = await db.query(sqlQuery);
